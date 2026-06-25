@@ -9,14 +9,8 @@
     "replit": {
       "url": "https://replit-mcp.com/server/mcp"
     },
-    "mode-analytics": {
-      "command": "npx",
-      "args": ["-y", "@cci-labs/mode-mcp"],
-      "env": {
-        "MODE_WORKSPACE": "",
-        "MODE_API_TOKEN": "",
-        "MODE_API_SECRET": ""
-      }
+    "finch-mode": {
+      "url": "https://finch.instawork.com/mcp/mode/"
     }
   }
 }
