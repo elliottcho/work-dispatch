@@ -59,16 +59,17 @@ CHAT_TITLE_CODES: dict[str, str] = {
     "general": "WD",
 }
 
+# Full title = "{CODE} · {context} {purpose}" — unique in the first 15–20 chars.
 CHAT_TITLE_LABELS: dict[str, str] = {
-    "hk-vetting": "Lisle",
-    "pro-activation": "Aris",
-    "general": "Route",
+    "hk-vetting": "Lisle vetting",
+    "pro-activation": "Aris activate",
+    "general": "Kenneth router",
 }
 
 
 def standard_chat_title(workstream_id: str, short_label: str | None = None) -> str:
-    """Short prefix-first titles — unique and readable in the first 10 chars."""
-    code = CHAT_TITLE_CODES.get(workstream_id, workstream_id[:3])
+    """Prefix-first titles: CODE · context purpose (15–20 chars to tell chats apart)."""
+    code = CHAT_TITLE_CODES.get(workstream_id, workstream_id[:3].upper())
     label = short_label or CHAT_TITLE_LABELS.get(workstream_id, workstream_id)
     return f"{code} · {label}"
 
