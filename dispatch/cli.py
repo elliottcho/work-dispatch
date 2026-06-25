@@ -18,7 +18,7 @@ from dispatch.integrations import (
     save_integration_context,
 )
 from dispatch.parser import parse_notes
-from dispatch.registry import load_registry, save_agent_id
+from dispatch.registry import apply_standard_chat_titles, load_registry, save_agent_id
 from dispatch.sources import source_label
 from dispatch.cursor_client import CursorClient
 
@@ -295,6 +295,21 @@ def cmd_link_chat(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_rename_chats(args: argparse.Namespace) -> int:
+    rows = apply_standard_chat_titles()
+    print("# Dispatch chat titles (registry updated)\n")
+    print("| Workstream | Title | Linked | Project |")
+    print("|---|---|---|---|")
+    for row in rows:
+        linked = "yes" if row["agent_id"] else "no"
+        print(f"| {row['workstream']} | {row['title']} | {linked} | `{row['project']}` |")
+    print(
+        "\nRename each Cursor chat tab to match its Title "
+        "(open the chat → ask the agent to rename, or use Cursor's rename on the tab)."
+    )
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Route Kenneth's priorities into Cursor chats and Asana"
@@ -380,6 +395,12 @@ def main() -> int:
     link_p.add_argument("workstream", help="Workstream id from registry.yaml")
     link_p.add_argument("agent_id", help="Cursor agent id (bc-* cloud or local id)")
     link_p.set_defaults(func=cmd_link_chat)
+
+    rename_p = sub.add_parser(
+        "rename-chats",
+        help="Apply standard Dispatch chat titles in registry.yaml",
+    )
+    rename_p.set_defaults(func=cmd_rename_chats)
 
     poll_p = sub.add_parser(
         "poll-granola",

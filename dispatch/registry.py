@@ -53,6 +53,24 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
     return workstreams, meta
 
 
+CHAT_TITLE_LABELS: dict[str, str] = {
+    "hk-vetting": "Lisle",
+    "pro-activation": "Aris",
+    "general": "Kenneth",
+}
+
+
+def standard_chat_title(workstream_id: str, short_label: str | None = None) -> str:
+    label = short_label or CHAT_TITLE_LABELS.get(workstream_id, workstream_id)
+    return f"Dispatch · {workstream_id} · {label}"
+
+
+def _save_registry(data: dict[str, Any], path: Path | None = None) -> None:
+    registry_path = path or Path(__file__).resolve().parent / "registry.yaml"
+    with registry_path.open("w") as f:
+        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+
+
 def save_agent_id(workstream_id: str, agent_id: str, path: Path | None = None) -> None:
     registry_path = path or Path(__file__).resolve().parent / "registry.yaml"
     with registry_path.open() as f:
@@ -65,5 +83,43 @@ def save_agent_id(workstream_id: str, agent_id: str, path: Path | None = None) -
     else:
         raise KeyError(f"Unknown workstream: {workstream_id}")
 
-    with registry_path.open("w") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+    _save_registry(data, path)
+
+
+def save_chat_title(workstream_id: str, title: str, path: Path | None = None) -> None:
+    registry_path = path or Path(__file__).resolve().parent / "registry.yaml"
+    with registry_path.open() as f:
+        data = yaml.safe_load(f)
+
+    for entry in data.get("workstreams", []):
+        if entry["id"] == workstream_id:
+            entry.setdefault("chat", {})["title"] = title
+            break
+    else:
+        raise KeyError(f"Unknown workstream: {workstream_id}")
+
+    _save_registry(data, path)
+
+
+def apply_standard_chat_titles(path: Path | None = None) -> list[dict[str, str]]:
+    registry_path = path or Path(__file__).resolve().parent / "registry.yaml"
+    with registry_path.open() as f:
+        data = yaml.safe_load(f)
+
+    rows: list[dict[str, str]] = []
+    for entry in data.get("workstreams", []):
+        ws_id = entry["id"]
+        title = standard_chat_title(ws_id)
+        chat = entry.setdefault("chat", {})
+        chat["title"] = title
+        rows.append(
+            {
+                "workstream": ws_id,
+                "title": title,
+                "agent_id": chat.get("agent_id") or "",
+                "project": _expand(entry["project_path"]),
+            }
+        )
+
+    _save_registry(data, path)
+    return rows

@@ -1,32 +1,30 @@
 manager: Kenneth
-
-# How priorities enter dispatch (Kenneth sets direction; you capture it):
 note_sources:
   manual:
     label: My notes from Kenneth
-    description: >
-      What you wrote down from syncs, standups, hallway chats, or DMs.
-      Your synthesis — not Kenneth's raw notes.
+    description: 'What you wrote down from syncs, standups, hallway chats, or DMs.
+      Your synthesis — not Kenneth''s raw notes.
+
+      '
   calls:
     label: Team calls
     description: Group meetings in Granola (standups, team syncs, reviews)
     granola:
       title_patterns:
-        - standup
-        - sync
-        - team
-        - weekly
-        - review
+      - standup
+      - sync
+      - team
+      - weekly
+      - review
   one_on_one:
     label: 1:1 meetings
     description: 1:1s with Kenneth or stakeholders
     granola:
       title_patterns:
-        - "1:1"
-        - 1-on-1
-        - one on one
+      - '1:1'
+      - 1-on-1
+      - one on one
       require_manager: true
-
 integrations:
   enabled: true
   require_flowchart_first: true
@@ -114,8 +112,8 @@ workstreams:
   - funnel
   - chicago
   chat:
-    title: HK Vetting — Lisle funnel
-    agent_id: null
+    title: Dispatch · hk-vetting · Lisle
+    agent_id: 817792f5-00e9-4dba-80ac-a93a3975ba21
   granola:
     query: Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan
       sync
@@ -144,8 +142,8 @@ workstreams:
   - first shift
   - supply activation
   chat:
-    title: Pro Activation — Aris track
-    agent_id: null
+    title: Dispatch · pro-activation · Aris
+    agent_id: a3f1647b-e340-4ccd-9328-982472b44512
   granola:
     query: Pro activation Aris supply activation app — decisions and action items
     participants:
@@ -167,28 +165,39 @@ workstreams:
   project_path: ~/Projects/work-dispatch
   keywords: []
   chat:
-    title: General — work dispatch
-    agent_id: null
+    title: Dispatch · general · Kenneth
+    agent_id: 6dc928c0-0ef9-47ab-983c-0cca77ee2081
   asana:
     project_name: null
     section: Inbox
 routing:
   fallback_workstream: general
   min_match_score: 0.15
-briefing_template: |
-  ## Work priorities ({date})
+briefing_template: '## Work priorities ({date})
+
 
   **Source:** {note_source}
 
+
   {items}
+
 
   ## Calls & 1:1 context (Granola)
 
+
   {granola_context}
+
 
   ## Documentation & data (Pantry / Redshift / Mode)
 
+
   {integration_context}
 
+
   ---
-  **Your job this session:** Turn the above into a concrete plan. Reconcile your notes with call/1:1 context, Pantry docs, and live metrics. List blockers, next actions, and what to defer.
+
+  **Your job this session:** Turn the above into a concrete plan. Reconcile your notes
+  with call/1:1 context, Pantry docs, and live metrics. List blockers, next actions,
+  and what to defer.
+
+  '
