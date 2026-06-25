@@ -53,6 +53,12 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
     return workstreams, meta
 
 
+CHAT_TITLE_CODES: dict[str, str] = {
+    "hk-vetting": "HK",
+    "pro-activation": "Pro",
+    "general": "WD",
+}
+
 CHAT_TITLE_LABELS: dict[str, str] = {
     "hk-vetting": "Lisle",
     "pro-activation": "Aris",
@@ -61,8 +67,10 @@ CHAT_TITLE_LABELS: dict[str, str] = {
 
 
 def standard_chat_title(workstream_id: str, short_label: str | None = None) -> str:
+    """Short prefix-first titles — unique and readable in the first 10 chars."""
+    code = CHAT_TITLE_CODES.get(workstream_id, workstream_id[:3])
     label = short_label or CHAT_TITLE_LABELS.get(workstream_id, workstream_id)
-    return f"Dispatch · {workstream_id} · {label}"
+    return f"{code} · {label}"
 
 
 def _save_registry(data: dict[str, Any], path: Path | None = None) -> None:

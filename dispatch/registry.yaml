@@ -112,7 +112,7 @@ workstreams:
   - funnel
   - chicago
   chat:
-    title: Dispatch · hk-vetting · Lisle
+    title: HK · Lisle
     agent_id: 817792f5-00e9-4dba-80ac-a93a3975ba21
   granola:
     query: Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan
@@ -142,7 +142,7 @@ workstreams:
   - first shift
   - supply activation
   chat:
-    title: Dispatch · pro-activation · Aris
+    title: Pro · Aris
     agent_id: a3f1647b-e340-4ccd-9328-982472b44512
   granola:
     query: Pro activation Aris supply activation app — decisions and action items
@@ -165,7 +165,7 @@ workstreams:
   project_path: ~/Projects/work-dispatch
   keywords: []
   chat:
-    title: Dispatch · general · Kenneth
+    title: WD · Kenneth
     agent_id: 6dc928c0-0ef9-47ab-983c-0cca77ee2081
   asana:
     project_name: null
