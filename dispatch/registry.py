@@ -55,14 +55,14 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
 
 CHAT_TITLE_CODES: dict[str, str] = {
     "hk-vetting": "HK",
-    "pro-activation": "Pro",
+    "pro-activation": "PRO",
     "general": "WD",
 }
 
 CHAT_TITLE_LABELS: dict[str, str] = {
     "hk-vetting": "Lisle",
     "pro-activation": "Aris",
-    "general": "Kenneth",
+    "general": "Route",
 }
 
 

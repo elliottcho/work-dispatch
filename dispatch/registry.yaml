@@ -113,7 +113,7 @@ workstreams:
   - chicago
   chat:
     title: HK · Lisle
-    agent_id: 817792f5-00e9-4dba-80ac-a93a3975ba21
+    agent_id: dc3fd24a-3ae5-41b0-8cec-093085b19f85
   granola:
     query: Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan
       sync
@@ -142,7 +142,7 @@ workstreams:
   - first shift
   - supply activation
   chat:
-    title: Pro · Aris
+    title: PRO · Aris
     agent_id: a3f1647b-e340-4ccd-9328-982472b44512
   granola:
     query: Pro activation Aris supply activation app — decisions and action items
@@ -165,7 +165,7 @@ workstreams:
   project_path: ~/Projects/work-dispatch
   keywords: []
   chat:
-    title: WD · Kenneth
+    title: WD · Route
     agent_id: 6dc928c0-0ef9-47ab-983c-0cca77ee2081
   asana:
     project_name: null
