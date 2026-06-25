@@ -1,0 +1,66 @@
+# Workstream registry — maps Kenneth's priorities to projects, chats, and Asana.
+# Update agent_id after you link a Cursor chat (cloud bc-* id or local id from dispatch list-chats).
+
+manager: Kenneth
+
+workstreams:
+  - id: hk-vetting
+    name: Hotel Housekeepers (Lisle)
+    project_path: ~/Projects/hk-vetting-funnel
+    keywords:
+      - housekeeper
+      - housekeepers
+      - hk
+      - lisle
+      - hyatt
+      - vetting
+      - funnel
+      - chicago
+    chat:
+      title: "HK Vetting — Lisle funnel"
+      agent_id: null
+    asana:
+      project_name: null  # set to your Asana project name
+      section: "This week"
+
+  - id: pro-activation
+    name: Pro Activation (Aris)
+    project_path: ~/Projects/pro-activation
+    keywords:
+      - pro activation
+      - activation
+      - aris
+      - signup
+      - first shift
+      - supply activation
+    chat:
+      title: "Pro Activation — Aris track"
+      agent_id: null
+    asana:
+      project_name: null
+      section: "This week"
+
+  - id: general
+    name: General / uncategorized
+    project_path: ~/Projects/work-dispatch
+    keywords: []
+    chat:
+      title: "General — Kenneth dispatch"
+      agent_id: null
+    asana:
+      project_name: null
+      section: "Inbox"
+
+routing:
+  # Items that match no workstream go here
+  fallback_workstream: general
+  # Minimum keyword score (0–1) to assign a workstream; below → fallback
+  min_match_score: 0.15
+
+briefing_template: |
+  ## Kenneth's priority ({date})
+
+  {items}
+
+  ---
+  **Your job this session:** Turn the above into a concrete plan for today. List blockers, next actions, and what to defer. Do not start unrelated work.
