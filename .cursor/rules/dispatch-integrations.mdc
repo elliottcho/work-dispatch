@@ -1,0 +1,23 @@
+---
+description: Full dispatch pipeline with Granola, Pantry, Redshift, Mode, and Replit
+alwaysApply: true
+---
+
+# Work dispatch — integrations
+
+Every dispatch run follows the staged pipeline in `dispatch/registry.yaml`.
+
+**Before routing or pushing to any project/chat:**
+
+1. Run `dispatch flowchart` and show the mermaid diagram + stage explanation to the user.
+2. Run `dispatch integration-queries` and execute MCP calls:
+   - **Granola** — meetings (`query_granola_meetings`, `list_meetings`, `get_meetings`)
+   - **Atlassian** — Confluence Pantry (`searchConfluenceUsingCql`, `getConfluencePage`)
+   - **finch-redshift** — warehouse metrics (`execute_query`, `list_tables`)
+   - **mode-analytics** — reports (`list_reports`, `get_report`)
+   - **Replit** — optional sandboxes when an item needs a spike
+3. Save context: `dispatch save-integration-context <workstream> <source> <file>`
+4. Confirm routing table with the user.
+5. Only then run `dispatch run --granola --integrations`.
+
+Never skip the flowchart stage. Never push briefings before enrichment unless the user explicitly opts out.

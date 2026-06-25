@@ -9,10 +9,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from dispatch.executor import execute_plan, plan_to_json
+from dispatch.flowchart import emit_flowchart
 from dispatch.granola import build_granola_queries, save_context
 from dispatch.ingest import ingest_granola, ingest_text, ingest_webhook_payload, poll_granola
+from dispatch.integrations import (
+    SOURCES,
+    build_integration_queries,
+    save_integration_context,
+)
 from dispatch.parser import parse_notes
 from dispatch.registry import load_registry, save_agent_id
+from dispatch.sources import source_label
 from dispatch.cursor_client import CursorClient
 
 
@@ -51,6 +58,82 @@ def _automation_flags(args: argparse.Namespace, meta: dict) -> tuple[bool, bool,
     return dry_run, sync_asana, include_granola
 
 
+def _integrations_enabled(args: argparse.Namespace, meta: dict) -> bool:
+    if getattr(args, "no_integrations", False):
+        return False
+    if getattr(args, "integrations", False):
+        return True
+    return bool(meta.get("integrations", {}).get("enabled", True))
+
+
+def _integration_sources(meta: dict) -> list[str]:
+    return meta.get("integrations", {}).get("sources", ["confluence", "redshift", "mode"])
+
+
+def _emit_flowchart_for_command(
+    meta: dict,
+    *,
+    command: str,
+    plan_summary: list | None = None,
+    print_flowchart: bool = True,
+) -> dict:
+    flow = emit_flowchart(meta, command=command, plan_summary=plan_summary)
+    if print_flowchart and meta.get("integrations", {}).get("require_flowchart_first", True):
+        print(flow["markdown"])
+        print("---")
+    return flow
+
+
+def cmd_flowchart(args: argparse.Namespace) -> int:
+    load_dotenv()
+    workstreams, meta = load_registry()
+    plan_summary = None
+    if args.notes or args.file or not sys.stdin.isatty():
+        notes = _load_notes(args)
+        plan = parse_notes(
+            notes,
+            workstreams,
+            fallback_id=meta["fallback_workstream"],
+            min_match_score=meta["min_match_score"],
+            date_label=args.date,
+        )
+        plan_summary = plan.summary()
+    flow = _emit_flowchart_for_command(
+        meta, command=args.command_name, plan_summary=plan_summary, print_flowchart=True
+    )
+    if args.json:
+        print(json.dumps({k: v for k, v in flow.items() if k != "markdown"}, indent=2))
+    return 0
+
+
+def cmd_integration_queries(args: argparse.Namespace) -> int:
+    load_dotenv()
+    workstreams, meta = load_registry()
+    plan = None
+    if args.notes or args.file or not sys.stdin.isatty():
+        notes = _load_notes(args)
+        plan = parse_notes(
+            notes,
+            workstreams,
+            fallback_id=meta["fallback_workstream"],
+            min_match_score=meta["min_match_score"],
+            date_label=args.date,
+        )
+    granola = build_granola_queries(workstreams, meta, plan)
+    integrations = build_integration_queries(workstreams, meta, plan)
+    print(json.dumps({"granola": granola, "integrations": integrations}, indent=2))
+    return 0
+
+
+def cmd_save_integration_context(args: argparse.Namespace) -> int:
+    if args.source not in SOURCES:
+        raise SystemExit(f"source must be one of: {', '.join(SOURCES)}")
+    content = Path(args.file).read_text()
+    path = save_integration_context(args.workstream, args.source, content)
+    print(f"Saved {args.source} context → {path}")
+    return 0
+
+
 def cmd_plan(args: argparse.Namespace) -> int:
     load_dotenv()
     workstreams, meta = load_registry()
@@ -77,16 +160,23 @@ def cmd_run(args: argparse.Namespace) -> int:
         min_match_score=meta["min_match_score"],
         date_label=args.date,
     )
+    flow = _emit_flowchart_for_command(
+        meta, command="run", plan_summary=plan.summary(), print_flowchart=not args.quiet
+    )
     results = execute_plan(
         plan,
         briefing_template=meta["briefing_template"],
         dry_run=args.dry_run,
         sync_asana=args.asana and not args.dry_run,
         include_granola=_granola_enabled(args, meta),
+        include_integrations=_integrations_enabled(args, meta),
+        integration_sources=_integration_sources(meta),
+        note_source=source_label(meta, getattr(args, "source", "combined")),
         asana_workspace_gid=os.environ.get("ASANA_WORKSPACE_GID"),
         cursor_api_key=os.environ.get("CURSOR_API_KEY"),
     )
-    print(json.dumps(results, indent=2))
+    output = {"flowchart": {k: v for k, v in flow.items() if k != "markdown"}, "results": results}
+    print(json.dumps(output, indent=2))
     return 0
 
 
@@ -233,7 +323,36 @@ def main() -> int:
         action="store_true",
         help="Skip Granola context even when enabled in registry",
     )
+    run_p.add_argument("--integrations", action="store_true", help="Include Pantry/Redshift/Mode context")
+    run_p.add_argument("--no-integrations", action="store_true", help="Skip integration context")
+    run_p.add_argument("--quiet", action="store_true", help="Skip printing flowchart to stdout")
+    run_p.add_argument(
+        "--source",
+        choices=["manual", "calls", "one_on_one", "combined"],
+        default="manual",
+        help="What you are dispatching: your notes, a call, a 1:1, or combined enrichment",
+    )
     run_p.set_defaults(func=cmd_run)
+
+    flow_p = sub.add_parser("flowchart", help="Emit workflow flowchart (show before dispatch)")
+    flow_p.add_argument("--notes", "-n", help="Optional notes for planned routing")
+    flow_p.add_argument("--file", "-f", help="Optional notes file")
+    flow_p.add_argument("--date", "-d", help="Date label")
+    flow_p.add_argument("--json", action="store_true", help="Print JSON metadata after markdown")
+    flow_p.add_argument("--command-name", default="run", help="Run type label")
+    flow_p.set_defaults(func=cmd_flowchart)
+
+    int_p = sub.add_parser("integration-queries", help="MCP queries: Confluence, Redshift, Mode, Replit")
+    int_p.add_argument("--notes", "-n", help="Optional notes to scope workstreams")
+    int_p.add_argument("--file", "-f", help="Optional notes file")
+    int_p.add_argument("--date", "-d", help="Date label")
+    int_p.set_defaults(func=cmd_integration_queries)
+
+    save_i_p = sub.add_parser("save-integration-context", help="Save integration MCP results")
+    save_i_p.add_argument("workstream", help="Workstream id or _shared")
+    save_i_p.add_argument("source", choices=list(SOURCES))
+    save_i_p.add_argument("file", help="Markdown context file")
+    save_i_p.set_defaults(func=cmd_save_integration_context)
 
     granola_p = sub.add_parser(
         "granola-queries",

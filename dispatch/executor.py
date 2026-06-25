@@ -6,6 +6,7 @@ from pathlib import Path
 from dispatch.asana_client import AsanaClient
 from dispatch.cursor_client import CursorClient, try_sdk_send
 from dispatch.granola import load_context
+from dispatch.integrations import merge_integration_block
 from dispatch.models import RoutingPlan
 from dispatch.parser import format_briefing
 
@@ -16,14 +17,22 @@ def write_project_briefing(
     template: str,
     *,
     include_granola: bool = False,
+    include_integrations: bool = False,
+    integration_sources: list[str] | None = None,
+    note_source: str = "My notes + calls/1:1s (Granola)",
 ) -> Path:
     ws = plan.workstreams[workstream_id]
     project = Path(ws.project_path)
     docs = project / "docs"
     docs.mkdir(parents=True, exist_ok=True)
-    out = docs / f"kenneth-dispatch-{plan.date_label}.md"
+    out = docs / f"work-dispatch-{plan.date_label}.md"
     granola_ctx = load_context(workstream_id) if include_granola else None
     manager_ctx = load_context("_manager") if include_granola else None
+    int_ctx = (
+        merge_integration_block(workstream_id, integration_sources or [])
+        if include_integrations
+        else None
+    )
     out.write_text(
         format_briefing(
             plan,
@@ -31,6 +40,8 @@ def write_project_briefing(
             template,
             granola_context=granola_ctx,
             manager_context=manager_ctx,
+            integration_context=int_ctx,
+            note_source=note_source,
         )
     )
     return out
@@ -43,6 +54,9 @@ def execute_plan(
     dry_run: bool = True,
     sync_asana: bool = False,
     include_granola: bool = False,
+    include_integrations: bool = False,
+    integration_sources: list[str] | None = None,
+    note_source: str = "My notes + calls/1:1s (Granola)",
     asana_workspace_gid: str | None = None,
     cursor_api_key: str | None = None,
 ) -> list[dict]:
@@ -68,12 +82,19 @@ def execute_plan(
         ws = plan.workstreams[ws_id]
         granola_ctx = load_context(ws_id) if include_granola else None
         manager_ctx = load_context("_manager") if include_granola else None
+        int_ctx = (
+            merge_integration_block(ws_id, integration_sources or [])
+            if include_integrations
+            else None
+        )
         briefing = format_briefing(
             plan,
             ws_id,
             briefing_template,
             granola_context=granola_ctx,
             manager_context=manager_ctx,
+            integration_context=int_ctx,
+            note_source=note_source,
         )
         action = {
             "workstream": ws_id,
@@ -83,6 +104,7 @@ def execute_plan(
             "items": [i.text for i in items],
             "briefing_path": None,
             "granola_context_cached": bool(granola_ctx or manager_ctx),
+            "integration_context_cached": bool(int_ctx and "No integration context" not in int_ctx),
             "cursor_action": None,
             "asana_task_gid": None,
         }
@@ -93,7 +115,12 @@ def execute_plan(
             continue
 
         briefing_path = write_project_briefing(
-            plan, ws_id, briefing_template, include_granola=include_granola
+            plan,
+            ws_id,
+            briefing_template,
+            include_granola=include_granola,
+            include_integrations=include_integrations,
+            integration_sources=integration_sources,
         )
         action["briefing_path"] = str(briefing_path)
 
@@ -139,7 +166,7 @@ def execute_plan(
         if sync_asana and asana and ws.asana_project_name and asana_workspace_gid:
             project = asana.find_project_by_name(asana_workspace_gid, ws.asana_project_name)
             if project:
-                task_name = f"[Kenneth {plan.date_label}] {ws.name}"
+                task_name = f"[Dispatch {plan.date_label}] {ws.name}"
                 notes = briefing + f"\n\nBriefing file: {briefing_path}"
                 gid = asana.create_task(
                     name=task_name,

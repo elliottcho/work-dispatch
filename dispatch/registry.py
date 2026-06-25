@@ -35,6 +35,7 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
                 asana_section=asana.get("section"),
                 granola_query=granola.get("query"),
                 granola_participants=granola.get("participants") or [],
+                integrations=entry.get("integrations"),
             )
         )
 
@@ -46,6 +47,8 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
         "briefing_template": data.get("briefing_template", ""),
         "granola": data.get("granola", {}),
         "automation": data.get("automation", {}),
+        "integrations": data.get("integrations", {}),
+        "note_sources": data.get("note_sources", {}),
     }
     return workstreams, meta
 

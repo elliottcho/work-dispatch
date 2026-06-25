@@ -2,6 +2,21 @@
   "mcpServers": {
     "granola": {
       "url": "https://mcp.granola.ai/mcp"
+    },
+    "finch-redshift": {
+      "url": "https://finch.instawork.com/mcp/redshift/"
+    },
+    "replit": {
+      "url": "https://replit-mcp.com/server/mcp"
+    },
+    "mode-analytics": {
+      "command": "npx",
+      "args": ["-y", "@cci-labs/mode-mcp"],
+      "env": {
+        "MODE_WORKSPACE": "",
+        "MODE_API_TOKEN": "",
+        "MODE_API_SECRET": ""
+      }
     }
   }
 }

@@ -1,106 +1,194 @@
-# Workstream registry — maps Kenneth's priorities to projects, chats, and Asana.
-# Update agent_id after you link a Cursor chat (cloud bc-* id or local id from dispatch list-chats).
-
 manager: Kenneth
 
+# How priorities enter dispatch (Kenneth sets direction; you capture it):
+note_sources:
+  manual:
+    label: My notes from Kenneth
+    description: >
+      What you wrote down from syncs, standups, hallway chats, or DMs.
+      Your synthesis — not Kenneth's raw notes.
+  calls:
+    label: Team calls
+    description: Group meetings in Granola (standups, team syncs, reviews)
+    granola:
+      title_patterns:
+        - standup
+        - sync
+        - team
+        - weekly
+        - review
+  one_on_one:
+    label: 1:1 meetings
+    description: 1:1s with Kenneth or stakeholders
+    granola:
+      title_patterns:
+        - "1:1"
+        - 1-on-1
+        - one on one
+      require_manager: true
+
+integrations:
+  enabled: true
+  require_flowchart_first: true
+  sources:
+  - confluence
+  - redshift
+  - mode
+  confluence:
+    space_key: PANTRY
+    mcp_server: atlassian
+  replit:
+    default_optional: true
+  stages:
+  - id: flowchart
+    order: 0
+    label: Show flowchart & explain pipeline
+    type: gate
+  - id: granola
+    order: 1
+    label: Granola meetings
+    mcp_server: granola
+    type: mcp
+  - id: confluence
+    order: 2
+    label: Confluence Pantry docs
+    mcp_server: atlassian
+    type: mcp
+  - id: redshift
+    order: 3
+    label: Redshift via Finch
+    mcp_server: finch-redshift
+    type: mcp
+  - id: mode
+    order: 4
+    label: Mode analytics
+    mcp_server: mode-analytics
+    type: mcp
+  - id: route
+    order: 5
+    label: Parse & route workstreams
+    type: internal
+  - id: replit
+    order: 6
+    label: Replit sandbox
+    mcp_server: replit
+    type: mcp
+    optional: true
+  - id: push
+    order: 7
+    label: Push briefings & chats
+    type: internal
 granola:
   enabled: true
   lookback_days: 14
-  manager_query: "What did Kenneth say about my priorities, goals, and action items for this week?"
-  # Dispatch chat uses Granola MCP: query_granola_meetings, list_meetings, get_meetings
-
-# Automated ingest when new Granola notes appear (poll or webhook).
-# Requires GRANOLA_API_KEY for poll-granola; see docs/automation-flow.md.
+  manager_query: What did Kenneth say about my priorities, goals, and action items
+    for this week?
 automation:
   enabled: true
-  trigger: poll  # poll | webhook | cursor_cron
-  poll_interval_minutes: 15  # suggested cron / Cursor Automation schedule
+  trigger: poll
+  poll_interval_minutes: 15
   granola_api:
-    initial_lookback_hours: 24  # first poll only; then uses data/granola-state.json
+    initial_lookback_hours: 24
   filters:
-    require_manager: true  # only notes mentioning Kenneth (title, summary, attendees)
-    min_action_items: 0    # set to 1+ to skip notes without checkbox action items
-    title_keywords: []     # e.g. ["day 4", "priorities"] — empty = use default day/priority patterns
-    participants_any: []   # e.g. ["Bryan", "Aris"] — empty = no participant filter
+    require_manager: true
+    min_action_items: 0
+    title_keywords: []
+    participants_any: []
   on_new_note:
     cache_context: true
     include_granola: true
     push_cursor: true
     push_asana: false
-    dry_run: true          # use `dispatch ingest --execute` to push live
-
+    dry_run: true
 workstreams:
-  - id: hk-vetting
-    name: Hotel Housekeepers (Lisle)
-    project_path: ~/Projects/hk-vetting-funnel
-    keywords:
-      - housekeeper
-      - housekeepers
-      - hk
-      - lisle
-      - hyatt
-      - vetting
-      - funnel
-      - chicago
-    chat:
-      title: "HK Vetting — Lisle funnel"
-      agent_id: null
-    granola:
-      query: "Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan sync"
-      participants:
-        - Kenneth
-        - Bryan
-    asana:
-      project_name: null  # set to your Asana project name
-      section: "This week"
-
-  - id: pro-activation
-    name: Pro Activation (Aris)
-    project_path: ~/Projects/pro-activation
-    keywords:
-      - pro activation
-      - activation
-      - aris
-      - signup
-      - first shift
-      - supply activation
-    chat:
-      title: "Pro Activation — Aris track"
-      agent_id: null
-    granola:
-      query: "Pro activation Aris supply activation app — decisions and action items"
-      participants:
-        - Kenneth
-        - Aris
-    asana:
-      project_name: null
-      section: "This week"
-
-  - id: general
-    name: General / uncategorized
-    project_path: ~/Projects/work-dispatch
-    keywords: []
-    chat:
-      title: "General — Kenneth dispatch"
-      agent_id: null
-    asana:
-      project_name: null
-      section: "Inbox"
-
+- id: hk-vetting
+  name: Hotel Housekeepers (Lisle)
+  project_path: ~/Projects/hk-vetting-funnel
+  keywords:
+  - housekeeper
+  - housekeepers
+  - hk
+  - lisle
+  - hyatt
+  - vetting
+  - funnel
+  - chicago
+  chat:
+    title: HK Vetting — Lisle funnel
+    agent_id: null
+  granola:
+    query: Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan
+      sync
+    participants:
+    - Kenneth
+    - Bryan
+  integrations:
+    confluence_cql: space = PANTRY AND (text ~ "lisle" OR text ~ "housekeeper" OR
+      text ~ "vetting") ORDER BY lastmodified DESC
+    redshift_hint: HK Lisle funnel counts — eligible, applied, interviewed, approved,
+      booked, worked
+    mode_reports:
+    - HK funnel
+    - Lisle vetting
+  asana:
+    project_name: null
+    section: This week
+- id: pro-activation
+  name: Pro Activation (Aris)
+  project_path: ~/Projects/pro-activation
+  keywords:
+  - pro activation
+  - activation
+  - aris
+  - signup
+  - first shift
+  - supply activation
+  chat:
+    title: Pro Activation — Aris track
+    agent_id: null
+  granola:
+    query: Pro activation Aris supply activation app — decisions and action items
+    participants:
+    - Kenneth
+    - Aris
+  integrations:
+    confluence_cql: space = PANTRY AND (text ~ "pro activation" OR text ~ "Aris" OR
+      text ~ "supply activation") ORDER BY lastmodified DESC
+    redshift_hint: Pro signup to first shift activation funnel metrics
+    mode_reports:
+    - Pro activation
+    - signup to first shift
+    replit_hint: Spike or prototype for supply activation app when needed
+  asana:
+    project_name: null
+    section: This week
+- id: general
+  name: General / uncategorized
+  project_path: ~/Projects/work-dispatch
+  keywords: []
+  chat:
+    title: General — work dispatch
+    agent_id: null
+  asana:
+    project_name: null
+    section: Inbox
 routing:
-  # Items that match no workstream go here
   fallback_workstream: general
-  # Minimum keyword score (0–1) to assign a workstream; below → fallback
   min_match_score: 0.15
-
 briefing_template: |
-  ## Kenneth's priority ({date})
+  ## Work priorities ({date})
+
+  **Source:** {note_source}
 
   {items}
 
-  ## Meeting context (Granola)
+  ## Calls & 1:1 context (Granola)
 
   {granola_context}
 
+  ## Documentation & data (Pantry / Redshift / Mode)
+
+  {integration_context}
+
   ---
-  **Your job this session:** Turn the above into a concrete plan for today. Reconcile Kenneth's notes with meeting decisions. List blockers, next actions, and what to defer. Do not start unrelated work.
+  **Your job this session:** Turn the above into a concrete plan. Reconcile your notes with call/1:1 context, Pantry docs, and live metrics. List blockers, next actions, and what to defer.

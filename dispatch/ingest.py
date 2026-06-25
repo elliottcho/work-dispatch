@@ -8,12 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from dispatch.executor import execute_plan, plan_to_json
+from dispatch.flowchart import emit_flowchart
 from dispatch.granola import save_context
 from dispatch.granola_api_client import GranolaApiClient
 from dispatch.granola_state import GranolaState
 from dispatch.models import Workstream
 from dispatch.parser import parse_notes
-from dispatch.registry import load_registry
+from dispatch.sources import classify_granola_note, source_label
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -369,12 +370,21 @@ def ingest_note(
         date_label=date_label or date.today().isoformat(),
     )
 
+    flowchart = emit_flowchart(meta, command="ingest", plan_summary=plan.summary())
+
+    granola_kind = classify_granola_note(note, meta)
+    note_src = source_label(meta, granola_kind)
+
+    int_cfg = meta.get("integrations", {})
     push_results = execute_plan(
         plan,
         briefing_template=meta["briefing_template"],
         dry_run=dry_run,
         sync_asana=sync_asana,
         include_granola=include_granola,
+        include_integrations=int_cfg.get("enabled", True),
+        integration_sources=int_cfg.get("sources", ["confluence", "redshift", "mode"]),
+        note_source=note_src,
         asana_workspace_gid=asana_workspace_gid or os.environ.get("ASANA_WORKSPACE_GID"),
         cursor_api_key=cursor_api_key or os.environ.get("CURSOR_API_KEY"),
     )
@@ -398,6 +408,9 @@ def ingest_note(
         "note": _note_summary(note),
         "artifact_path": str(artifact_path) if artifact_path else None,
         "manager_context_path": str(manager_path) if manager_path else None,
+        "flowchart_path": flowchart.get("flowchart_path"),
+        "note_source": note_src,
+        "granola_note_kind": granola_kind,
         "dispatch_text": notes_text,
         "plan": json.loads(plan_to_json(plan)),
         "push_results": push_results,

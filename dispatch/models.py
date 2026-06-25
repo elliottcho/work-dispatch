@@ -24,6 +24,7 @@ class Workstream:
     asana_section: str | None
     granola_query: str | None = None
     granola_participants: list[str] = field(default_factory=list)
+    integrations: dict[str, Any] | None = None
 
 
 @dataclass

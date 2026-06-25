@@ -1,6 +1,8 @@
 # Work Dispatch
 
-Route **Kenneth's day/week priorities** into the right Cursor chats and Asana tasks — without manually copying notes into every project.
+Route **work priorities** (your notes from Kenneth, plus calls and 1:1s) into the right Cursor chats — without manually copying context into every project.
+
+**Kenneth sets direction. You capture it** as your own notes, team calls, or 1:1 meetings.
 
 ## How it works
 
@@ -18,12 +20,12 @@ Granola note (new meeting / conversation)
         └── Creates tasks → Asana (optional)
 ```
 
-**Manual path** (paste Kenneth's notes):
+**Manual path** (your notes from Kenneth):
 
 ```
-You paste Kenneth's notes
+You paste your notes
         ↓
-   Granola MCP — recent meetings, decisions, action items
+   Granola — calls & 1:1 context
         ↓
    Dispatch chat (skill) parses, reconciles, confirms routing
         ↓
@@ -64,6 +66,22 @@ The **Granola plugin** (skills, commands) and the **Granola MCP server** (meetin
 | Free plan | Only notes from the last 30 days are queryable |
 
 Plugin skills/commands work globally; **MCP tools only appear when this project (or your global `~/.cursor/mcp.json`) includes the granola server.**
+
+## Connect all integrations
+
+See [docs/integrations-flow.md](docs/integrations-flow.md) for the full staged pipeline.
+
+| Integration | MCP / plugin | Purpose |
+|-------------|--------------|---------|
+| Granola | `granola` URL | Meeting context |
+| Confluence Pantry | `atlassian` plugin | Internal documentation |
+| Redshift | `finch-redshift` URL | Warehouse metrics |
+| Mode | `mode-analytics` npx | Reports & SQL |
+| Replit | `replit` URL | Optional prototypes |
+
+**Setup:** `.cursor/mcp.json` lists remote + stdio servers. `.cursor/settings.json` enables the Atlassian plugin. Reload Cursor, then connect each server in **Settings → Tools & MCP**. Fill `MODE_*` credentials in mcp.json for Mode.
+
+**Every run:** `dispatch flowchart` (or `dispatch run`, which prints it first) shows the pipeline before any briefing or chat push.
 
 ## Quick start
 
@@ -135,9 +153,9 @@ Edit `dispatch/registry.yaml` to add keywords, Asana project names, and local pr
 
 ## Conversational interface
 
-Use a dedicated Cursor chat titled **"Kenneth Dispatch"** — the personal skill `work-dispatch` teaches the agent to:
+Use a dedicated **Work Dispatch** chat — the personal skill teaches the agent to:
 
-1. Accept raw notes from Kenneth
+1. Accept **your notes** (from Kenneth), or pull **calls / 1:1s** from Granola
 2. Show a routing table (workstream → items → target chat)
 3. Ask for confirmation
 4. Run `dispatch run` from `~/Projects/work-dispatch`

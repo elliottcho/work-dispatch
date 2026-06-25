@@ -7,3 +7,8 @@ __pycache__/
 
 # Generated dispatch briefings in this repo
 docs/kenneth-dispatch-*.md
+
+# Runtime pipeline artifacts
+data/runs/
+data/integration-context/**/*.md
+!data/integration-context/.gitkeep

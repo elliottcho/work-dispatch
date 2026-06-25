@@ -81,15 +81,25 @@ def format_briefing(
     *,
     granola_context: str | None = None,
     manager_context: str | None = None,
+    integration_context: str | None = None,
+    note_source: str = "My notes + calls/1:1s (Granola)",
 ) -> str:
     items = plan.items_by_workstream.get(workstream_id, [])
     bullets = "\n".join(f"- {i.text}" for i in items) or "- (no items routed here)"
 
     context_parts: list[str] = []
     if manager_context:
-        context_parts.append("### From meetings with Kenneth\n\n" + manager_context.strip())
+        context_parts.append("### Calls & 1:1s\n\n" + manager_context.strip())
     if granola_context:
-        context_parts.append("### Related meeting context\n\n" + granola_context.strip())
-    granola_block = "\n\n".join(context_parts) if context_parts else "_No Granola context cached yet._"
+        context_parts.append("### Workstream meetings\n\n" + granola_context.strip())
+    granola_block = "\n\n".join(context_parts) if context_parts else "_No call/1:1 context cached yet._"
 
-    return template.format(date=plan.date_label, items=bullets, granola_context=granola_block)
+    integration_block = integration_context.strip() if integration_context else "_No Pantry / data context cached yet._"
+
+    return template.format(
+        date=plan.date_label,
+        items=bullets,
+        granola_context=granola_block,
+        integration_context=integration_block,
+        note_source=note_source,
+    )
