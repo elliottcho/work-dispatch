@@ -22,6 +22,7 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
     for entry in data.get("workstreams", []):
         chat = entry.get("chat", {})
         asana = entry.get("asana", {})
+        granola = entry.get("granola", {})
         workstreams.append(
             Workstream(
                 id=entry["id"],
@@ -32,6 +33,8 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
                 agent_id=chat.get("agent_id"),
                 asana_project_name=asana.get("project_name"),
                 asana_section=asana.get("section"),
+                granola_query=granola.get("query"),
+                granola_participants=granola.get("participants") or [],
             )
         )
 
@@ -41,6 +44,8 @@ def load_registry(path: Path | None = None) -> tuple[list[Workstream], dict[str,
         "fallback_workstream": routing.get("fallback_workstream", "general"),
         "min_match_score": float(routing.get("min_match_score", 0.15)),
         "briefing_template": data.get("briefing_template", ""),
+        "granola": data.get("granola", {}),
+        "automation": data.get("automation", {}),
     }
     return workstreams, meta
 

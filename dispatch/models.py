@@ -22,6 +22,8 @@ class Workstream:
     agent_id: str | None
     asana_project_name: str | None
     asana_section: str | None
+    granola_query: str | None = None
+    granola_participants: list[str] = field(default_factory=list)
 
 
 @dataclass

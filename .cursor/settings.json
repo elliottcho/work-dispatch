@@ -1,0 +1,7 @@
+{
+  "plugins": {
+    "granola": {
+      "enabled": true
+    }
+  }
+}

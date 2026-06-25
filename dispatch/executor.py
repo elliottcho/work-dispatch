@@ -5,17 +5,34 @@ from pathlib import Path
 
 from dispatch.asana_client import AsanaClient
 from dispatch.cursor_client import CursorClient, try_sdk_send
+from dispatch.granola import load_context
 from dispatch.models import RoutingPlan
 from dispatch.parser import format_briefing
 
 
-def write_project_briefing(plan: RoutingPlan, workstream_id: str, template: str) -> Path:
+def write_project_briefing(
+    plan: RoutingPlan,
+    workstream_id: str,
+    template: str,
+    *,
+    include_granola: bool = False,
+) -> Path:
     ws = plan.workstreams[workstream_id]
     project = Path(ws.project_path)
     docs = project / "docs"
     docs.mkdir(parents=True, exist_ok=True)
     out = docs / f"kenneth-dispatch-{plan.date_label}.md"
-    out.write_text(format_briefing(plan, workstream_id, template))
+    granola_ctx = load_context(workstream_id) if include_granola else None
+    manager_ctx = load_context("_manager") if include_granola else None
+    out.write_text(
+        format_briefing(
+            plan,
+            workstream_id,
+            template,
+            granola_context=granola_ctx,
+            manager_context=manager_ctx,
+        )
+    )
     return out
 
 
@@ -25,6 +42,7 @@ def execute_plan(
     briefing_template: str,
     dry_run: bool = True,
     sync_asana: bool = False,
+    include_granola: bool = False,
     asana_workspace_gid: str | None = None,
     cursor_api_key: str | None = None,
 ) -> list[dict]:
@@ -48,7 +66,15 @@ def execute_plan(
         if not items:
             continue
         ws = plan.workstreams[ws_id]
-        briefing = format_briefing(plan, ws_id, briefing_template)
+        granola_ctx = load_context(ws_id) if include_granola else None
+        manager_ctx = load_context("_manager") if include_granola else None
+        briefing = format_briefing(
+            plan,
+            ws_id,
+            briefing_template,
+            granola_context=granola_ctx,
+            manager_context=manager_ctx,
+        )
         action = {
             "workstream": ws_id,
             "name": ws.name,
@@ -56,6 +82,7 @@ def execute_plan(
             "chat_title": ws.chat_title,
             "items": [i.text for i in items],
             "briefing_path": None,
+            "granola_context_cached": bool(granola_ctx or manager_ctx),
             "cursor_action": None,
             "asana_task_gid": None,
         }
@@ -65,7 +92,9 @@ def execute_plan(
             results.append(action)
             continue
 
-        briefing_path = write_project_briefing(plan, ws_id, briefing_template)
+        briefing_path = write_project_briefing(
+            plan, ws_id, briefing_template, include_granola=include_granola
+        )
         action["briefing_path"] = str(briefing_path)
 
         if ws.agent_id:

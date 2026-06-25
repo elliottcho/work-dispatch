@@ -3,6 +3,32 @@
 
 manager: Kenneth
 
+granola:
+  enabled: true
+  lookback_days: 14
+  manager_query: "What did Kenneth say about my priorities, goals, and action items for this week?"
+  # Dispatch chat uses Granola MCP: query_granola_meetings, list_meetings, get_meetings
+
+# Automated ingest when new Granola notes appear (poll or webhook).
+# Requires GRANOLA_API_KEY for poll-granola; see docs/automation-flow.md.
+automation:
+  enabled: true
+  trigger: poll  # poll | webhook | cursor_cron
+  poll_interval_minutes: 15  # suggested cron / Cursor Automation schedule
+  granola_api:
+    initial_lookback_hours: 24  # first poll only; then uses data/granola-state.json
+  filters:
+    require_manager: true  # only notes mentioning Kenneth (title, summary, attendees)
+    min_action_items: 0    # set to 1+ to skip notes without checkbox action items
+    title_keywords: []     # e.g. ["day 4", "priorities"] — empty = use default day/priority patterns
+    participants_any: []   # e.g. ["Bryan", "Aris"] — empty = no participant filter
+  on_new_note:
+    cache_context: true
+    include_granola: true
+    push_cursor: true
+    push_asana: false
+    dry_run: true          # use `dispatch ingest --execute` to push live
+
 workstreams:
   - id: hk-vetting
     name: Hotel Housekeepers (Lisle)
@@ -19,6 +45,11 @@ workstreams:
     chat:
       title: "HK Vetting — Lisle funnel"
       agent_id: null
+    granola:
+      query: "Hotel housekeepers Lisle vetting funnel — decisions, action items, Bryan sync"
+      participants:
+        - Kenneth
+        - Bryan
     asana:
       project_name: null  # set to your Asana project name
       section: "This week"
@@ -36,6 +67,11 @@ workstreams:
     chat:
       title: "Pro Activation — Aris track"
       agent_id: null
+    granola:
+      query: "Pro activation Aris supply activation app — decisions and action items"
+      participants:
+        - Kenneth
+        - Aris
     asana:
       project_name: null
       section: "This week"
@@ -62,5 +98,9 @@ briefing_template: |
 
   {items}
 
+  ## Meeting context (Granola)
+
+  {granola_context}
+
   ---
-  **Your job this session:** Turn the above into a concrete plan for today. List blockers, next actions, and what to defer. Do not start unrelated work.
+  **Your job this session:** Turn the above into a concrete plan for today. Reconcile Kenneth's notes with meeting decisions. List blockers, next actions, and what to defer. Do not start unrelated work.

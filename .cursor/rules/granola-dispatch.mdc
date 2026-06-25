@@ -1,0 +1,15 @@
+---
+description: Read Granola meeting context when dispatching Kenneth's priorities
+alwaysApply: true
+---
+
+# Granola + work dispatch
+
+When routing Kenneth's priorities or running `dispatch`:
+
+1. Use **Granola MCP** before executing dispatch (`query_granola_meetings`, `list_meetings`, `get_meetings`).
+2. Run `dispatch granola-queries` to get scoped queries per workstream.
+3. Save results with `dispatch save-granola-context <workstream> <file>` (use `_manager` for Kenneth-wide context).
+4. Include cached context in briefings via `dispatch run --granola`.
+
+Reconcile pasted notes with what was actually decided in meetings. Cite meeting title and date when surfacing context.

@@ -4,3 +4,6 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .DS_Store
+
+# Generated dispatch briefings in this repo
+docs/kenneth-dispatch-*.md

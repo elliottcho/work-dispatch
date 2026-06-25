@@ -74,7 +74,22 @@ def parse_notes(
     return plan
 
 
-def format_briefing(plan: RoutingPlan, workstream_id: str, template: str) -> str:
+def format_briefing(
+    plan: RoutingPlan,
+    workstream_id: str,
+    template: str,
+    *,
+    granola_context: str | None = None,
+    manager_context: str | None = None,
+) -> str:
     items = plan.items_by_workstream.get(workstream_id, [])
     bullets = "\n".join(f"- {i.text}" for i in items) or "- (no items routed here)"
-    return template.format(date=plan.date_label, items=bullets)
+
+    context_parts: list[str] = []
+    if manager_context:
+        context_parts.append("### From meetings with Kenneth\n\n" + manager_context.strip())
+    if granola_context:
+        context_parts.append("### Related meeting context\n\n" + granola_context.strip())
+    granola_block = "\n\n".join(context_parts) if context_parts else "_No Granola context cached yet._"
+
+    return template.format(date=plan.date_label, items=bullets, granola_context=granola_block)

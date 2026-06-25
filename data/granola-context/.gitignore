@@ -1,0 +1,3 @@
+# Cached Granola meeting context (written by dispatch save-granola-context)
+*.md
+!.gitkeep
